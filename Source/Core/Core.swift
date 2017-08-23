@@ -408,6 +408,9 @@ open class FormViewController: UIViewController, FormViewControllerProtocol, For
     
     /// Whether expanded inline rows should be made visible automatically. Defaults to `true`.
     open var isInlineRowsMadeVisibleOnExpansion: Bool = true
+    
+    /// Whether expanded inline rows should be collapsed when a text input row get focus. Defaults to `true`.
+    open var isExpandedInlineRowsCollapsedOnInputRowFocus: Bool = true
 
     private lazy var _form: Form = { [weak self] in
         let form = Form()
@@ -559,7 +562,7 @@ open class FormViewController: UIViewController, FormViewControllerProtocol, For
         cell.row.updateCell()
         RowDefaults.onCellHighlightChanged["\(type(of: cell.row!))"]?(cell, cell.row)
         cell.row.callbackOnCellHighlightChanged?()
-        guard let _ = tableView, (form.inlineRowHideOptions ?? Form.defaultInlineRowHideOptions).contains(.FirstResponderChanges) else { return }
+        guard isExpandedInlineRowsCollapsedOnInputRowFocus, let _ = tableView, (form.inlineRowHideOptions ?? Form.defaultInlineRowHideOptions).contains(.FirstResponderChanges) else { return }
         let row = cell.baseRow
         let inlineRow = row?._inlineRow
         for row in form.allRows.filter({ $0 !== row && $0 !== inlineRow && $0._inlineRow != nil }) {
