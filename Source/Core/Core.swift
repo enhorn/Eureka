@@ -409,8 +409,8 @@ open class FormViewController: UIViewController, FormViewControllerProtocol, For
     /// Whether expanded inline rows should be made visible automatically. Defaults to `true`.
     open var isInlineRowsMadeVisibleOnExpansion: Bool = true
     
-    /// Whether expanded inline rows should be collapsed when a text input row get focus. Defaults to `true`.
-    open var isExpandedInlineRowsCollapsedOnInputRowFocus: Bool = true
+    /// Whether the colapse of expanded inline rows should be delayed by 0.5 seconds. Defaults to `false`.
+    open var isExpandedInlineRowsCollapseDelayed: Bool = false
 
     private lazy var _form: Form = { [weak self] in
         let form = Form()
@@ -562,7 +562,19 @@ open class FormViewController: UIViewController, FormViewControllerProtocol, For
         cell.row.updateCell()
         RowDefaults.onCellHighlightChanged["\(type(of: cell.row!))"]?(cell, cell.row)
         cell.row.callbackOnCellHighlightChanged?()
-        guard isExpandedInlineRowsCollapsedOnInputRowFocus, let _ = tableView, (form.inlineRowHideOptions ?? Form.defaultInlineRowHideOptions).contains(.FirstResponderChanges) else { return }
+        
+        guard let _ = tableView, (form.inlineRowHideOptions ?? Form.defaultInlineRowHideOptions).contains(.FirstResponderChanges) else { return }
+        
+        if isExpandedInlineRowsCollapseDelayed {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [weak self] _ in
+                self?.colapseRows(except: cell)
+            })
+        } else {
+            colapseRows(except: cell)
+        }
+    }
+    
+    private func colapseRows<T: Equatable>(except cell: Cell<T>) {
         let row = cell.baseRow
         let inlineRow = row?._inlineRow
         for row in form.allRows.filter({ $0 !== row && $0 !== inlineRow && $0._inlineRow != nil }) {
