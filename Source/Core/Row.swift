@@ -24,7 +24,7 @@
 
 import Foundation
 
-open class RowOf<T: Equatable>: BaseRow {
+open class RowOf<T>: BaseRow where T: Equatable{
 
     private var _value: T? {
         didSet {
@@ -70,9 +70,6 @@ open class RowOf<T: Equatable>: BaseRow {
         set { value = newValue as? T }
     }
 
-    /// Variable used in rows with options that serves to generate the options for that row.
-    public var dataProvider: DataProvider<T>?
-
     /// Block variable used to get the String that should be displayed for the value of this row.
     public var displayValueFor: ((T?) -> String?)? = {
         return $0.map { String(describing: $0) }
@@ -86,7 +83,11 @@ open class RowOf<T: Equatable>: BaseRow {
 
     @discardableResult
     public override func validate() -> [ValidationError] {
+        #if swift(>=4.1)
+        validationErrors = rules.compactMap { $0.validateFn(value) }
+        #else
         validationErrors = rules.flatMap { $0.validateFn(value) }
+        #endif
         return validationErrors
     }
 
